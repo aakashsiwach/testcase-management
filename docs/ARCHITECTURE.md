@@ -21,7 +21,7 @@ This is the design to build against. Acceptance criteria IDs (`AC-*`) refer to [
 - **Backend:** Express 4, CommonJS, `pg` (raw parameterized SQL, no ORM), `ioredis`, `zod` validation.
 - **Database:** PostgreSQL 16. Schema managed by plain SQL migrations in `backend/src/db/migrations`.
 - **Cache:** Redis, used both as the read-through cache and as the store for cache metrics.
-- **Hosting:** Render free tier (see [PLAN.md](./PLAN.md#deployment)).
+- **Hosting:** Vercel (frontend), Render free web service (API), Neon (Postgres), Upstash (Redis). See [README → Deployment](../README.md#deployment-free-tier-neon--upstash--render--vercel).
 
 ## 2. Repository layout (target)
 
@@ -38,7 +38,7 @@ testcase-management/
 │   │   ├── validators/         # zod schemas
 │   │   ├── db/
 │   │   │   ├── migrations/     # 001_init.sql, ...
-│   │   │   ├── seed.sql        # demo users + sample project
+│   │   │   ├── seed.js         # demo users + sample projects (deterministic)
 │   │   │   └── migrate.js      # runs migrations in order
 │   │   └── docs/openapi.js     # Swagger spec served at /api/docs
 │   ├── .env.example
@@ -54,7 +54,7 @@ testcase-management/
 │   ├── .env.example
 │   └── package.json
 ├── docs/
-├── render.yaml
+├── render.yaml             # API blueprint (frontend/vercel.json for the SPA)
 └── README.md
 ```
 
@@ -71,13 +71,13 @@ Required tables are in **bold**. The rest support execution, defects and bonus f
 | **test_steps** | id, test_case_id → test_cases ON DELETE CASCADE, step_number, action, expected_result | UNIQUE (test_case_id, step_number) |
 | **test_suites** | id, project_id → projects, name, description, created_by | |
 | **test_suite_cases** | suite_id → test_suites, test_case_id → test_cases, position, PK (suite_id, test_case_id) | many-to-many mapping |
-| test_runs | id, project_id, suite_id → test_suites (nullable), name, status, started_by, started_at, completed_at | one row per "execute entire suite" |
+| test_runs | id, project_id, suite_id → test_suites (nullable), name, status, case_ids `int[]` (snapshot), started_by, started_at, completed_at | one row per "execute entire suite" |
 | **test_executions** | id, test_case_id → test_cases, project_id, run_id → test_runs (nullable), executed_by → users, status (`Pass / Fail / Blocked / Skipped`), comments, duration_seconds, executed_at | append-only history |
 | execution_attachments | id, execution_id → test_executions, filename, mime_type, size_bytes, data `bytea`, uploaded_by | stored in Postgres because Render's free disk is ephemeral |
 | defects | id, project_id, test_case_id, execution_id, title, description, severity, status, reported_by, assigned_to, timestamps | created from failed executions |
 | test_case_versions | id, test_case_id, version, snapshot `jsonb`, changed_by, changed_at | bonus: versioning |
 | test_case_comments | id, test_case_id, user_id, body, created_at | bonus: comments |
-| audit_logs | id, user_id, action, entity_type, entity_id, details `jsonb`, created_at | audit trail (AC-EXEC-05) |
+| audit_logs | id, user_id, project_id, action, entity_type, entity_id, details `jsonb`, created_at | audit trail (AC-EXEC-05) |
 
 **Indexes (AC-DB-03):**
 - `test_cases (project_id)`, `(project_id, priority)`, `(project_id, type)`, `(assigned_to)`
@@ -103,17 +103,22 @@ Required tables are in **bold**. The rest support execution, defects and bonus f
 | `POST /api/auth/register`, `/login` | public | | | | auth (5/15m) |
 | `GET /api/auth/me` | ✅ | ✅ | ✅ | ✅ | general |
 | `GET /api/users` and user management | ✅ | | | | general |
-| `GET /api/projects`, `/:id`, `/:id/members` | ✅ | ✅ | ✅ | ✅ | general |
-| `POST/PUT /api/projects`, members add/remove | ✅ | ✅ | | | general |
+| `GET /api/projects`, `/:id`, `/:id/members`, `/:id/audit` | ✅ | ✅ | ✅ | ✅ | general |
+| `POST/PUT /api/projects`, members add/remove, `/:id/candidates` | ✅ | ✅ | | | general |
 | `DELETE /api/projects/:id` | ✅ | | | | general |
-| `GET /api/testcases`, `/:id`, `/:id/executions`, export | ✅ | ✅ | ✅ | ✅ | testcase (100/h) |
+| `GET /api/testcases`, `/:id`, export | ✅ | ✅ | ✅ | ✅ | testcase (100/h) |
+| `GET /api/testcases/:id/executions`, `/versions`, `/comments`, `/audit`, `/tags` | ✅ | ✅ | ✅ | ✅ | general |
+| `POST /api/testcases/:id/comments` | ✅ | ✅ | ✅ | | testcase (100/h) |
 | `POST/PUT/DELETE /api/testcases`, bulk, import, assign | ✅ | ✅ | | | testcase (100/h) |
 | `GET /api/testsuites` | ✅ | ✅ | ✅ | ✅ | general |
 | `POST/PUT/DELETE /api/testsuites`, add/remove cases | ✅ | ✅ | | | general |
-| `POST /api/testexecutions`, `POST /api/testsuites/:id/runs` | ✅ | ✅ | ✅ | | execution (200/h) |
+| `POST /api/testexecutions`, `PUT /:id` (testers: own only), attachments, `POST /api/testsuites/:id/runs`, `PATCH /api/testruns/:id` | ✅ | ✅ | ✅ | | execution (200/h) |
+| `GET /api/testruns`, `/:id`, `GET /api/testexecutions/:id`, attachment download | ✅ | ✅ | ✅ | ✅ | execution (200/h) |
 | `POST /api/defects`, `PUT /api/defects/:id` | ✅ | ✅ | ✅ | | execution (200/h) |
 | `GET /api/analytics/*` | ✅ | ✅ | ✅ | ✅ | analytics (50/h) |
 | `GET /api/metrics/cache` | ✅ | ✅ | ✅ | ✅ | general |
+| `POST /api/metrics/cache/benchmark` | ✅ | ✅ | | | general |
+| `POST /api/metrics/cache/reset` | ✅ | | | | general |
 
 ## 5. Caching (AC-CACHE)
 
@@ -131,7 +136,7 @@ Read-through cache via `cache.getOrSet(key, ttl, loader)`. Every response sets a
 
 ## 6. Rate limiting (AC-RATE)
 
-`express-rate-limit` with `standardHeaders: 'draft-7'`, and `app.set('trust proxy', 1)` because Render sits behind a proxy.
+`express-rate-limit` with `standardHeaders: 'draft-7'`, and `app.set('trust proxy', 1)` because Render sits behind a proxy. Counters use the in-memory store (single instance).
 
 | Limiter | Window | Max | Key |
 |---|---|---|---|

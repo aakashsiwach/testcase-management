@@ -7,8 +7,10 @@
 | Account | Purpose | Cost | Status |
 |---|---|---|---|
 | GitHub (`aakashsiwach`) | Source code; Render deploys from it | Free | ✅ |
-| Render (sign in with GitHub) | API, static frontend, Postgres, Redis (Key Value) | Free, no card | ☐ create |
-| Neon *(optional)* | Postgres that doesn't expire after 30 days | Free | only if needed |
+| Render (sign in with GitHub) | API web service | Free, no card | ☐ create |
+| Vercel | Frontend | Free | ☐ create |
+| Neon | PostgreSQL | Free | ☐ create |
+| Upstash | Redis | Free | ☐ create |
 | Brevo / Resend *(optional)* | Real email for assignment notifications | Free | only for bonus |
 
 ## Repositories
@@ -30,29 +32,25 @@
 
 ## Deployment
 
-On the Render free tier, from `render.yaml` (Blueprint):
+Free tier across four providers (full steps in the [README](../README.md#deployment-free-tier-neon--upstash--render--vercel)):
 
-| Service | Render type | Name (suggested) |
+| Piece | Provider | Config |
 |---|---|---|
-| API | Web Service (Node, free) | `testcase-api` |
-| Frontend | Static Site (free) | `testcase-web` |
-| Database | Postgres (free) | `testcase-db` |
-| Cache | Key Value (free, Redis-compatible) | `testcase-redis` |
+| Frontend (static SPA) | Vercel | root `frontend/`, `vercel.json` (SPA rewrites, headers), env `VITE_API_URL` |
+| API | Render web service (free) | `render.yaml` blueprint, health check `/api/health` |
+| Database | Neon Postgres | `DATABASE_URL` (`sslmode=require`), `DATABASE_SSL=true` |
+| Cache | Upstash Redis | `REDIS_URL` (`rediss://`) |
 
-Steps:
-1. Render → **New → Blueprint** → select this repo.
-2. Set `JWT_SECRET` and `CORS_ORIGIN` (frontend URL) on the API; set `VITE_API_URL` (API URL) on the static site.
-3. Run migrations and seed (`npm run db:migrate && npm run db:seed`) via the API build/start command.
-4. Smoke test with each demo account.
+The API start command runs migrations (idempotent) and the seed (only on an empty DB) before booting.
 
 ### Free-tier constraints and how we handle them
 
 | Constraint | Mitigation |
 |---|---|
-| Web service sleeps after 15 min idle; ~1 min cold start | Open the site before submitting; mention it in the email; frontend shows "waking server…" |
-| Free Postgres expires 30 days after creation; one per workspace | Fine for review; migrate to Neon if needed later |
-| Ephemeral filesystem | Attachments stored in Postgres `bytea` |
-| Free Key Value is in-memory only (data lost on restart) | It's a cache, so losing it is fine; metrics reset is acceptable |
+| Render web service sleeps after 15 min idle; ~1 min cold start | Open the site before submitting; mention it in the email; the frontend shows a "server may be waking up" message |
+| Ephemeral filesystem | Attachments stored in Postgres `bytea`; no local state |
+| Neon free compute auto-suspends | Pool max 5, 10 s connect timeout; first query after idle is slower |
+| Upstash command quota | Cache only hot reads; API degrades to Postgres if Redis is unavailable |
 
 ## Risks
 
@@ -70,7 +68,7 @@ Hi,
 Please find my submission for the Full Stack Test Case Management System assignment.
 
 IMPORTANT URLS
-- Live app:      https://<frontend>.onrender.com
+- Live app:      https://<frontend>.vercel.app
 - API:           https://<api>.onrender.com
 - API docs:      https://<api>.onrender.com/api/docs
 - GitHub repo:   https://github.com/aakashsiwach/testcase-management
