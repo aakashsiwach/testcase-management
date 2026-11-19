@@ -16,7 +16,7 @@ import {
 } from 'recharts';
 import { STATUS_COLORS } from '../../lib/constants';
 
-const axis = { stroke: 'var(--muted)', fontSize: 12 };
+const axis = { fill: 'var(--muted)', fontSize: 12 };
 const tooltipStyle = {
   contentStyle: { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)' },
   labelStyle: { color: 'var(--text)', fontWeight: 600 },
