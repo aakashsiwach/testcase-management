@@ -5,12 +5,12 @@ const prefixOf = (key) => key.split(':')[0];
 
 async function recordMetric(key, hit, ms) {
   if (!isReady()) return;
-  const field = hit ? 'hit' : 'miss';
+  const metricsKey = METRICS_PREFIX + prefixOf(key);
   try {
     await client
       .multi()
-      .hincrby(METRICS_PREFIX + prefixOf(key), `${field}s`, 1)
-      .hincrbyfloat(METRICS_PREFIX + prefixOf(key), `${field}_ms`, ms)
+      .hincrby(metricsKey, hit ? 'hits' : 'misses', 1)
+      .hincrbyfloat(metricsKey, hit ? 'hit_ms' : 'miss_ms', ms)
       .exec();
   } catch {
     /* metrics are best effort */
