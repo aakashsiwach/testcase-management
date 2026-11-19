@@ -21,5 +21,5 @@ export default [
       'react-refresh/only-export-components': 'off',
     },
   },
-  { files: ['playwright.config.js', 'e2e/**/*.js'], languageOptions: { globals: globals.node } },
+  { files: ['vite.config.js', 'playwright.config.js', 'e2e/**/*.js'], languageOptions: { globals: globals.node } },
 ];
