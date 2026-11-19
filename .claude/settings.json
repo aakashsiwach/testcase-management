@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git config:*)",
+      "Bash(psql:*)",
+      "Bash(createdb:*)",
+      "Bash(redis-cli:*)",
+      "Bash(curl:*)",
+      "Bash(bash scripts/smoke.sh:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(tail:*)",
+      "Bash(head:*)",
+      "Bash(kill:*)",
+      "Bash(lsof:*)"
+    ],
+    "deny": [
+      "Read(./**/node_modules/**)",
+      "Read(./**/package-lock.json)",
+      "Read(./**/dist/**)",
+      "Read(./**/.env)"
+    ]
+  }
+}
