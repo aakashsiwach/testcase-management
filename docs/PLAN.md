@@ -7,10 +7,10 @@
 | Account | Purpose | Cost | Status |
 |---|---|---|---|
 | GitHub (`aakashsiwach`) | Source code; Render deploys from it | Free | ✅ |
-| Render (sign in with GitHub) | API web service | Free, no card | ☐ create |
-| Vercel | Frontend | Free | ☐ create |
-| Neon | PostgreSQL | Free | ☐ create |
-| Upstash | Redis | Free | ☐ create |
+| Render (sign in with GitHub) | API web service | Free, no card | ✅ deployed |
+| Vercel | Frontend | Free | ✅ deployed |
+| Neon | PostgreSQL | Free | ✅ connected |
+| Upstash | Redis | Free | ✅ connected |
 | Brevo / Resend *(optional)* | Real email for assignment notifications | Free | only for bonus |
 
 ## Repositories
@@ -26,7 +26,7 @@
 | M2 | Thu–Fri | **Backend features:** projects, test cases (CRUD, filters, bulk, steps), suites, runs, executions, attachments, defects, audit, analytics, caching, rate limits, Swagger | Every endpoint in the role matrix works via Swagger |
 | M3 | Fri 20 Nov | **Frontend foundation:** Vite, router with lazy routes, contexts, API client, layout, login/register, theme | Login, logout and role-aware nav work |
 | M4 | Fri–Sat | **Frontend features:** dashboard (charts), projects, test cases (virtual list, filters, bulk, form), detail (history, comments, versions), suites, suite runner, defects, users, performance page | All AC-FE criteria met |
-| M5 | Sat 21 Nov | **Deploy** to Render, seed production DB, smoke test all 4 roles | Live URLs work |
+| M5 | Sat 21 Nov | **Deploy** to Render, seed production DB, smoke test all 4 roles | Live URLs work ✅ |
 | M6 | Sun 22 Nov | Bonus (CSV import/export, versioning, comments, email), docs (schema, user guide, setup), bug fixes | REQUIREMENTS.md all checked |
 | M7 | Mon 23 Nov, 9–10 AM | Wake the free services, final smoke test, send submission email | Email sent before 11:00 |
 
@@ -68,16 +68,16 @@ Hi,
 Please find my submission for the Full Stack Test Case Management System assignment.
 
 IMPORTANT URLS
-- Live app:      https://<frontend>.vercel.app
-- API:           https://<api>.onrender.com
-- API docs:      https://<api>.onrender.com/api/docs
+- Live app:      https://testcase-management-eight.vercel.app/
+- API:           https://testcase-api.onrender.com
+- API docs:      https://testcase-api.onrender.com/api/docs
 - GitHub repo:   https://github.com/aakashsiwach/testcase-management
 
 DEMO CREDENTIALS
-- Admin:      admin@demo.com / <password>
-- Test Lead:  lead@demo.com / <password>
-- Tester:     tester@demo.com / <password>
-- Read Only:  viewer@demo.com / <password>
+- Admin:      admin@demo.com / Admin@123
+- Test Lead:  lead@demo.com / Lead@123
+- Tester:     tester@demo.com / Tester@123
+- Read Only:  viewer@demo.com / Viewer@123
 
 Note: hosted on Render's free tier; the first request after inactivity may take ~1 minute to wake the server.
 

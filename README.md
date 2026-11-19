@@ -4,14 +4,35 @@ A full-stack web app for QA teams to **create, organize, assign and execute test
 
 Scope and status are tracked against the acceptance criteria in [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md).
 
-## Live demo
+## Live demo / production deployment
 
 | | URL |
 |---|---|
-| App (Vercel) | _set after deployment_ |
-| API (Render) | _set after deployment_ |
-| API docs (Swagger) | `<API URL>/api/docs` |
-| Health check | `<API URL>/api/health` |
+| App (Vercel) | <https://testcase-management-eight.vercel.app/> |
+| API (Render) | <https://testcase-api.onrender.com> |
+| API docs (Swagger) | <https://testcase-api.onrender.com/api/docs> |
+| Health check | <https://testcase-api.onrender.com/api/health> |
+| Source | <https://github.com/aakashsiwach/testcase-management> |
+
+Both the frontend and the API are deployed. The health check reported `{"status":"ok","database":"ok","redis":"ok","uptime":137}`, so both Neon Postgres and Upstash Redis are connected. The API runs on Render's free tier, so the first request after about 15 minutes idle can take up to a minute while it wakes up.
+
+### Production architecture
+
+```
+Browser ──> Vercel (React SPA, static build)
+              │  HTTPS, JWT bearer token (VITE_API_URL)
+              ▼
+            Render web service (Node.js / Express API, render.yaml)
+              ├──> Neon PostgreSQL   (data + attachments, DATABASE_URL)
+              └──> Upstash Redis     (read-through cache + cache metrics, REDIS_URL)
+```
+
+| Layer | Provider | Config in repo |
+|---|---|---|
+| Frontend | Vercel | `frontend/vercel.json` (SPA rewrites, security headers) |
+| Backend | Render (Node.js / Express) | `render.yaml` |
+| Database | Neon PostgreSQL | migrations in `backend/src/db/migrations/` |
+| Cache | Upstash Redis | TTLs set by `CACHE_TTL_*` |
 
 ### Demo credentials
 
@@ -125,6 +146,19 @@ npm run dev                   # http://localhost:5173
 
 **Frontend** (`frontend/.env.example`): `VITE_API_URL`, the API base URL (no trailing slash).
 
+## Testing
+
+| What | Where | Command | Last verified result |
+|---|---|---|---|
+| Backend integration and unit tests (node:test + supertest; needs Postgres and Redis) | `backend` | `npm test` | 40 / 40 passed |
+| Backend lint | `backend` | `npm run lint` | clean |
+| Frontend unit tests (Vitest) | `frontend` | `npm test` | 7 / 7 passed |
+| Frontend lint | `frontend` | `npm run lint` | clean |
+| Frontend production build | `frontend` | `npm run build` | succeeds |
+| Browser smoke tests (Playwright, Chromium) | `frontend` | `npm run test:e2e` | 13 / 13 passed |
+
+These results come from the local post-merge verification of commit `28cacce`. The Playwright suite covers role-based access for all four demo users, the dashboard, test cases, suites, runs, projects, the theme toggle and the mobile layout. It reseeds the `testcase_test` database, so never point `E2E_DATABASE_URL` at production.
+
 ## API
 
 Interactive docs: **`/api/docs`** (OpenAPI JSON at `/api/openapi.json`). Log in with `POST /api/auth/login`, click **Authorize**, and paste the token.
@@ -133,7 +167,18 @@ Route protections from the brief: `GET /api/testcases` all roles · `POST/PUT/DE
 
 ## Deployment (free tier: Neon + Upstash + Render + Vercel)
 
-Nothing depends on the local filesystem: attachments live in Postgres, the cache in Redis, and sessions are stateless JWTs.
+The live URLs are listed under [Live demo](#live-demo--production-deployment). Nothing depends on the local filesystem: attachments live in Postgres, the cache in Redis, and sessions are stateless JWTs.
+
+**Production environment variables** (names only; set the values in each provider's dashboard and never commit them):
+
+| Service | Set manually | Set by `render.yaml` / provider |
+|---|---|---|
+| Render (API) | `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGIN`, `APP_URL` | `NODE_ENV`, `NODE_VERSION`, `DATABASE_SSL`, `DATABASE_POOL_MAX`, `JWT_SECRET` (generated), `JWT_EXPIRES_IN`, `PORT` (Render) |
+| Vercel (frontend) | `VITE_API_URL` (the build fails without it) | none |
+
+Optional on Render: `RATE_LIMIT_*_MAX`, `CACHE_TTL_*`, `MAX_UPLOAD_MB`, `SMTP_*`, `MAIL_FROM` (see the table above).
+
+To redeploy from scratch:
 
 1. **Neon (PostgreSQL)** → create a project and database, then copy the *pooled* connection string (`…?sslmode=require`).
 2. **Upstash (Redis)** → create a Redis database (TLS on), then copy the `rediss://default:…@….upstash.io:6379` URL.

@@ -182,7 +182,7 @@ The submission is judged on three things:
 - [x] **AC-DOC-04** User guide for each role.
 
 ### Live demo
-- [ ] **AC-DEMO-01** Working, publicly reachable application.
+- [x] **AC-DEMO-01** Working, publicly reachable application (frontend on Vercel, API on Render; health check reports database and Redis ok).
 - [x] **AC-DEMO-02** Demo credentials for admin, test-lead, tester and read-only.
 - [x] **AC-DEMO-03** Sample project with pre-populated test cases, suites, executions and defects.
 - [x] **AC-DEMO-04** Performance metrics showing caching effectiveness (hit/miss ratio, cached vs. uncached latency).
