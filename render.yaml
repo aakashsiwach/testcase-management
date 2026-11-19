@@ -1,0 +1,35 @@
+# Render Blueprint for the API (free web service).
+# Database: Neon Postgres · Cache: Upstash Redis · Frontend: Vercel (see README → Deployment).
+services:
+  - type: web
+    name: testcase-api
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: backend
+    buildCommand: npm ci --omit=dev
+    # Migrations are idempotent; the seed only runs on an empty database.
+    startCommand: npm run db:migrate && npm run db:seed && npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 22.12.0
+      - key: DATABASE_URL
+        sync: false # Neon connection string (?sslmode=require)
+      - key: DATABASE_SSL
+        value: "true"
+      - key: DATABASE_POOL_MAX
+        value: "5"
+      - key: REDIS_URL
+        sync: false # Upstash rediss:// URL
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: CORS_ORIGIN
+        sync: false # https://<your-app>.vercel.app
+      - key: APP_URL
+        sync: false # https://<your-app>.vercel.app

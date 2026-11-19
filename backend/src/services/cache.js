@@ -113,9 +113,13 @@ async function getMetrics() {
     misses: totalMisses,
     hitRatio: totalHits + totalMisses ? totalHits / (totalHits + totalMisses) : 0,
   };
-  const info = await client.info('memory');
-  const mem = /used_memory_human:(\S+)/.exec(info);
-  result.memoryUsed = mem ? mem[1] : null;
+  try {
+    // Some managed Redis providers (e.g. Upstash) restrict INFO; treat it as optional.
+    const mem = /used_memory_human:(\S+)/.exec(await client.info('memory'));
+    result.memoryUsed = mem ? mem[1] : null;
+  } catch {
+    result.memoryUsed = null;
+  }
   result.cachedKeys = await countKeys(['analytics:*', 'suites:*', 'project:*', 'projects:*']);
   return result;
 }
