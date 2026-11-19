@@ -9,5 +9,5 @@ export default defineConfig({
       output: { manualChunks: { recharts: ['recharts'], react: ['react', 'react-dom', 'react-router-dom'] } },
     },
   },
-  test: { environment: 'node' },
+  test: { environment: 'node', include: ['src/**/*.test.{js,jsx}'] },
 });

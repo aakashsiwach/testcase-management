@@ -23,3 +23,8 @@ Thumbs.db
 
 # Local uploads
 uploads/
+
+# Playwright
+frontend/e2e/.results/
+frontend/e2e/screenshots/
+playwright-report/

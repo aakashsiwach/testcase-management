@@ -100,6 +100,7 @@ npm run dev                   # http://localhost:5173
 | backend | `npm run lint` | ESLint |
 | frontend | `npm run dev` / `npm run build` / `npm run preview` | dev server / production build / preview build |
 | frontend | `npm test` / `npm run lint` | Vitest unit tests / ESLint |
+| frontend | `npm run test:e2e` | Playwright smoke tests (first run: `npx playwright install chromium`). Boots the API on :4001 with a reseeded `testcase_test` DB (override with `E2E_DATABASE_URL`) and Vite on :5174; screenshots go to `frontend/e2e/screenshots/` |
 
 ### Environment variables
 
